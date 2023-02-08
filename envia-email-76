@@ -1,0 +1,4 @@
+#!/bin/bash
+sendEmail -o tls=no -f <email> -t <emails destino> -u "FailOver: mensagem -  `date`" -o message-file=/usr/local/firewall/failover/falha1 -s <smtp> -xu <email> -xp <senha>
+
+

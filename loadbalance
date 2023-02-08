@@ -1,0 +1,63 @@
+#!/bin/bash
+
+#Vars
+#link1
+iflink1="enp6s0"
+tablelink1="200"
+gwlink1="<gateway 1>"
+netlink1="<link 1>"
+pesolink1=7
+
+#link2
+iflink2="enp7s0"
+tablelink2="201"
+gwlink2="<gateway 2>"
+netlink2="<link 2"
+pesolink2=3
+
+#Internal
+ifinternal="enp3s0"
+internalnet="192.168.0.0/24"
+
+#Modulos
+modprobe iptable_nat
+modprobe ip_nat_ftp
+modprobe ipt_MARK
+
+echo "1" > /proc/sys/net/ipv4/conf/default/rp_filter
+echo "1" > /proc/sys/net/ipv4/conf/all/rp_filter
+
+#Ativar tcp_syncookies, ip_forward e ip_dynaddr (feitos sysctl)
+#Deleta rota padrão
+ip route del default
+ 
+#limpa regras tabelas
+ip route flush $tablelink1
+ip route flush $tablelink2
+ 
+#Define rotas
+ip route add default dev $iflink1 via $gwlink1 table $tablelink1
+ip route add default dev $iflink2 via $gwlink2 table $tablelink2
+
+#Define roteamento links
+cmd_link1=$(ip rule show | grep $netlink1)
+if [ "$cmd_link1" = "" ]; then
+ip rule add from $netlink1 lookup $tablelink1
+fi
+cmd_link2=$(ip rule show | grep $netlink2)
+if [ "$cmd_link2" = "" ]; then
+ip rule add from $netlink2 lookup $tablelink2
+fi
+ 
+#Define as regras para balanceamento
+ip route add default scope global nexthop via $gwlink1 dev $iflink1 weight $pesolink1 nexthop via $gwlink2 dev $iflink2 weight $pesolink2
+
+ip rule add fwmark 0x10 lookup $tablelink1 prio 3
+ip rule add fwmark 0x20 lookup $tablelink2 prio 3
+
+#Marcando a saída das portas 443 (bancos) pelo link1
+#iptables -I PREROUTING -t mangle -i $ifinternal -s $internalnet -d 0/0 -p tcp -m multiport --dports 443,587 -j MARK --set-mark 0x10
+#iptables -I PREROUTING -t mangle -i $ifinternal -s $internalnet -d 0/0 -p tcp -m multiport --dports 587 -j MARK --set-mark 0x20
+
+#Aplica as regras
+ip route flush cache

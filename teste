@@ -1,0 +1,5 @@
+#!/bin/bash
+
+GW="`ip ro | grep -i default | cut -f3 -d" "`"
+
+echo $GW
