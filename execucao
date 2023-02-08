@@ -7,7 +7,7 @@ if test "$sim" = "1"
 then
   echo "Failover is offline";
   echo "Starting...";
-  sh /usr/local/firewall/failover/failover.sh &
+  sh /{local do arquivo}/failover.sh &
 else
   echo "Failover em execucao." ;
 fi
