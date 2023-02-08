@@ -1,0 +1,14 @@
+#!/bin/sh
+# Verificacao se servico esta online
+
+sim=$(ps aux | grep "failover.sh" | wc -l)
+
+if test "$sim" = "1"
+then
+  echo "Failover is offline";
+  echo "Starting...";
+  sh /usr/local/firewall/failover/failover.sh &
+else
+  echo "Failover em execucao." ;
+fi
+
